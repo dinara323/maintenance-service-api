@@ -1,0 +1,14 @@
+{
+  "name": "maintenance-service-api",
+  "version": "1.0.0",
+  "description": "REST API for equipment maintenance management",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "uuid": "^13.0.0"
+  }
+}
