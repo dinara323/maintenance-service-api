@@ -99,7 +99,7 @@ export async function updateEquipment(id, data) {
     return null;
   }
 
-  if (data.serialNumber) {
+  if (data.serialNumber !== undefined) {
     const equipmentWithSameSerialNumber =
       await equipmentRepository.findBySerialNumber(data.serialNumber);
 

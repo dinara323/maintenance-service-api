@@ -1,4 +1,4 @@
- import * as equipmentService from '../services/equipment.service.js';
+import * as equipmentService from '../services/equipment.service.js';
 
 export async function getEquipment(req, res) {
   const page = Number(req.query.page) || 1;
