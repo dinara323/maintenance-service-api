@@ -1,157 +1,171 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import * as requestRepository
-from '../repositories/request.repository.js';
+import * as requestRepository from '../repositories/request.repository.js';
+import * as equipmentRepository from '../repositories/equipment.repository.js';
 
-import * as equipmentRepository
-from '../repositories/request.repository.js';
-
-const statusTransitions = {
-  new:[
-    'in_progress',
-    'rejected'
-  ],
-
-  in_progress:[
-    'done',
-    'rejected'
-  ],
-  done:[],
-  rejected:[]
+const allowedTransitions = {
+  new: ['in_progress', 'rejected'],
+  in_progress: ['done', 'rejected'],
+  done: [],
+  rejected: []
 };
-export async function getRequests(filters={}) {
-  let requests =
-    await requestRepository.findAll();
-  if(filters.status){
-    requests =
-      requests.filter(
-        request =>
-        request.status === filters.status
-      );
+
+export async function getRequests({
+  status,
+  priority,
+  equipmentId,
+  page = 1,
+  limit = 10
+}) {
+  let requests = await requestRepository.findAll();
+
+  if (status) {
+    requests = requests.filter(
+      (item) => item.status === status
+    );
   }
-  if(filters.priority){
-    requests =
-      requests.filter(
-        request =>
-        request.priority === filters.priority
-      );
+
+  if (priority) {
+    requests = requests.filter(
+      (item) => item.priority === priority
+    );
   }
-  if(filters.equipmentId){
-    requests =
-      requests.filter(
-        request =>
-        request.equipmentId === filters.equipmentId
-      );
+
+  if (equipmentId) {
+    requests = requests.filter(
+      (item) => item.equipmentId === equipmentId
+    );
   }
-  return requests;
+
+  const total = requests.length;
+
+  const start = (page - 1) * limit;
+  const end = start + limit;
+
+  requests = requests.slice(start, end);
+
+  return {
+    data: requests,
+    meta: {
+      total,
+      page,
+      limit
+    }
+  };
 }
-export async function getRequestById(id){
+
+export async function getRequestById(id) {
   return requestRepository.findById(id);
 }
-export async function getEquipmentRequests(equipmentId){
-  return requestRepository.findByEquipmentId(
-    equipmentId
-  );
 
-}
-
-export async function createRequest(data){
+export async function createRequest(data) {
   const equipment =
-    await equipmentRepository.findById(
-      data.equipmentId
+    await equipmentRepository.findById(data.equipmentId);
+
+  if (!equipment) {
+    const error = new Error(
+      'Equipment not found'
     );
-  if(!equipment){
-    const error =
-      new Error(
-        'Equipment not found'
-      );
-    error.code =
-      'EQUIPMENT_NOT_FOUND';
+
+    error.code = 'EQUIPMENT_NOT_FOUND';
+
     throw error;
   }
 
-  const request={
-    id:uuidv4(),
-    equipmentId:data.equipmentId,
-    title:data.title,
-    description:data.description || '',
-    priority:data.priority,
-    status:'new',
-    plannedAt:data.plannedAt || null,
-    createdAt:
-      new Date().toISOString(),
-    updatedAt:
-      new Date().toISOString()
+  const now = new Date().toISOString();
+
+  const request = {
+    id: uuidv4(),
+    equipmentId: data.equipmentId,
+    title: data.title,
+    description: data.description || '',
+    priority: data.priority,
+    status: 'new',
+    plannedAt: data.plannedAt,
+    createdAt: now,
+    updatedAt: now
   };
+
   return requestRepository.create(request);
 }
-export async function updateRequest(id,data){
-  const request =
+
+export async function updateRequest(id, data) {
+  const existingRequest =
     await requestRepository.findById(id);
 
-  if(!request){
+  if (!existingRequest) {
     return null;
   }
-  const updates={};
-  if(data.title !== undefined){
-    updates.title=data.title;
+
+  const updates = {};
+
+  if (data.equipmentId !== undefined) {
+    const equipment =
+      await equipmentRepository.findById(
+        data.equipmentId
+      );
+
+    if (!equipment) {
+      const error = new Error(
+        'Equipment not found'
+      );
+
+      error.code = 'EQUIPMENT_NOT_FOUND';
+
+      throw error;
+    }
+
+    updates.equipmentId = data.equipmentId;
   }
 
-  if(data.description !== undefined){
-    updates.description=data.description;
+  if (data.title !== undefined) {
+    updates.title = data.title;
   }
 
-  if(data.priority !== undefined){
-    updates.priority=data.priority;
-
+  if (data.description !== undefined) {
+    updates.description = data.description;
   }
-  if(data.plannedAt !== undefined){
-    updates.plannedAt=data.plannedAt;
-  }
-  updates.updatedAt =
-    new Date().toISOString();
 
-  return requestRepository.update(
-    id,
-    updates
-  );
+  if (data.priority !== undefined) {
+    updates.priority = data.priority;
+  }
+
+  if (data.plannedAt !== undefined) {
+    updates.plannedAt = data.plannedAt;
+  }
+
+  updates.updatedAt = new Date().toISOString();
+
+  return requestRepository.update(id, updates);
 }
 
-export async function changeStatus(id,newStatus){
+export async function updateRequestStatus(id, status) {
   const request =
     await requestRepository.findById(id);
-  if(!request){
+
+  if (!request) {
     return null;
   }
+
   const allowed =
-    statusTransitions[
-      request.status
-    ];
+    allowedTransitions[request.status] || [];
 
-  if(!allowed.includes(newStatus)){
+  if (!allowed.includes(status)) {
+    const error = new Error(
+      `Cannot change status from ${request.status} to ${status}`
+    );
 
+    error.code = 'INVALID_STATUS_TRANSITION';
 
-    const error =
-      new Error(
-        'Status transition is forbidden'
-      );
-    error.code =
-      'INVALID_STATUS_TRANSITION';
     throw error;
   }
 
-  return requestRepository.update(
-    id,
-    {
-      status:newStatus,
-      updatedAt:
-        new Date().toISOString()
-
-    }
-  );
-
+  return requestRepository.update(id, {
+    status,
+    updatedAt: new Date().toISOString()
+  });
 }
 
-export async function deleteRequest(id){
+export async function deleteRequest(id) {
   return requestRepository.remove(id);
 }

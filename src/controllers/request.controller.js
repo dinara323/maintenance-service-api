@@ -1,134 +1,109 @@
-import * as requestService
-from '../services/request.service.js';
+import * as requestService from '../services/request.service.js';
+import { NotFoundError } from '../errors/NotFoundError.js';
 
-export async function getRequests(req,res){
-  const requests =
-    await requestService.getRequests(
-      req.query
-    );
-  res.status(200).json({
-    data:requests,
-    total:requests.length
-  });
-}
+export async function getRequests(req, res, next) {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
 
-export async function getRequestById(req,res){
-  const request =
-    await requestService.getRequestById(
-      req.params.id
-    );
-  if(!request){
-    return res.status(404).json({
-      error:'Request not found'
+    const result = await requestService.getRequests({
+      status: req.query.status,
+      priority: req.query.priority,
+      equipmentId: req.query.equipmentId,
+      page,
+      limit
     });
+
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
   }
-  res.json({
-    data:request
-  });
 }
 
-export async function getEquipmentRequests(req,res){
- const requests =
-   await requestService.getEquipmentRequests(
-     req.params.id
-   );
+export async function getRequestById(req, res, next) {
+  try {
+    const request =
+      await requestService.getRequestById(req.params.id);
 
- res.json({
-   data:requests
- });
-}
+    if (!request) {
+      throw new NotFoundError('Заявка не найдена');
+    }
 
-export async function createRequest(req,res){
- try{
-
-  const request =
-    await requestService.createRequest(
-      req.body
-    );
-
-  res
-  .status(201)
-  .location(
-    `/api/requests/${request.id}`
-  )
-  .json({
-    data:request
-  });
-
- }
- catch(error){
-  if(error.code === 'EQUIPMENT_NOT_FOUND'){
-    return res.status(404).json({
-      error:error.message
+    res.status(200).json({
+      data: request
     });
+  } catch (error) {
+    next(error);
   }
-  throw error;
- }
-}
-export async function updateRequest(req,res){
- const request =
- await requestService.updateRequest(
-   req.params.id,
-   req.body
- );
-
- if(!request){
-  return res.status(404).json({
-    error:'Request not found'
-  });
- }
-
- res.json({
-  data:request
- });
 }
 
-export async function changeStatus(req,res){
- try{
+export async function createRequest(req, res, next) {
+  try {
+    const request =
+      await requestService.createRequest(req.body);
 
- const request =
- await requestService.changeStatus(
-   req.params.id,
-   req.body.status
- );
+    res
+      .status(201)
+      .location(`/api/requests/${request.id}`)
+      .json({
+        data: request
+      });
+  } catch (error) {
+    next(error);
+  }
+}
 
- if(!request){
-  return res.status(404).json({
-    error:'Request not found'
-  });
- }
+export async function updateRequest(req, res, next) {
+  try {
+    const request =
+      await requestService.updateRequest(
+        req.params.id,
+        req.body
+      );
 
- res.json({
-   data:request
- });
+    if (!request) {
+      throw new NotFoundError('Заявка не найдена');
+    }
 
- }
- catch(error){
-
-  if(
-    error.code ===
-    'INVALID_STATUS_TRANSITION'
-  ){
-    return res.status(409).json({
-      error:error.message
-
+    res.status(200).json({
+      data: request
     });
+  } catch (error) {
+    next(error);
   }
-  throw error;
- }
 }
 
-export async function deleteRequest(req,res){
- const result =
- await requestService.deleteRequest(
-   req.params.id
- );
+export async function updateRequestStatus(req, res, next) {
+  try {
+    const request =
+      await requestService.updateRequestStatus(
+        req.params.id,
+        req.body.status
+      );
 
- if(!result){
-  return res.status(404).json({
-    error:'Request not found'
-  });
+    if (!request) {
+      throw new NotFoundError('Заявка не найдена');
+    }
 
- }
- res.status(204).send();
+    res.status(200).json({
+      data: request
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function deleteRequest(req, res, next) {
+  try {
+    const deleted =
+      await requestService.deleteRequest(req.params.id);
+
+    if (!deleted) {
+      throw new NotFoundError('Заявка не найдена');
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
 }

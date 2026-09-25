@@ -8,7 +8,9 @@ import logger from './src/middlewares/logger.middleware.js';
 import security from './src/middlewares/security.middleware.js';
 import corsMiddleware from './src/middlewares/cors.middleware.js';
 import rateLimit from './src/middlewares/rateLimit.middleware.js';
-import notFound from './src/middlewares/notFound.middleware.js';
+
+import { notFound } from './src/middlewares/notFound.js';
+import { errorHandler } from './src/middlewares/errorHandler.js';
 
 const app = express();
 
@@ -21,21 +23,21 @@ app.use(corsMiddleware);
 app.use(rateLimit);
 
 app.get('/', (req, res) => {
-    res.json({
-        message: 'Maintenance Service API is running',
-        requestId: req.requestId
-    });
+  res.status(200).json({
+    message: 'Maintenance Service API is running'
+  });
 });
 
 app.get('/api/health', (req, res) => {
-    res.status(200).json({
-        status: 'ok'
-    });
+  res.status(200).json({
+    status: 'ok'
+  });
 });
 
 app.use('/api/equipment', equipmentRoutes);
 app.use('/api/requests', requestRoutes);
 
 app.use(notFound);
+app.use(errorHandler);
 
 export default app;

@@ -1,5 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
+
 import * as equipmentRepository from '../repositories/equipment.repository.js';
+import * as requestRepository from '../repositories/request.repository.js';
 
 export async function getEquipment({
   status,
@@ -12,11 +14,15 @@ export async function getEquipment({
   let equipment = await equipmentRepository.findAll();
 
   if (status) {
-    equipment = equipment.filter((item) => item.status === status);
+    equipment = equipment.filter(
+      (item) => item.status === status
+    );
   }
 
   if (type) {
-    equipment = equipment.filter((item) => item.type === type);
+    equipment = equipment.filter(
+      (item) => item.type === type
+    );
   }
 
   const allowedSortFields = [
@@ -67,11 +73,17 @@ export async function getEquipmentById(id) {
 
 export async function createEquipment(data) {
   const existingEquipment =
-    await equipmentRepository.findBySerialNumber(data.serialNumber);
+    await equipmentRepository.findBySerialNumber(
+      data.serialNumber
+    );
 
   if (existingEquipment) {
-    const error = new Error('Serial number already exists');
+    const error = new Error(
+      'Serial number already exists'
+    );
+
     error.code = 'DUPLICATE_SERIAL_NUMBER';
+
     throw error;
   }
 
@@ -99,16 +111,22 @@ export async function updateEquipment(id, data) {
     return null;
   }
 
-  if (data.serialNumber !== undefined) {
+  if (data.serialNumber) {
     const equipmentWithSameSerialNumber =
-      await equipmentRepository.findBySerialNumber(data.serialNumber);
+      await equipmentRepository.findBySerialNumber(
+        data.serialNumber
+      );
 
     if (
       equipmentWithSameSerialNumber &&
       equipmentWithSameSerialNumber.id !== id
     ) {
-      const error = new Error('Serial number already exists');
+      const error = new Error(
+        'Serial number already exists'
+      );
+
       error.code = 'DUPLICATE_SERIAL_NUMBER';
+
       throw error;
     }
   }
@@ -146,5 +164,28 @@ export async function updateEquipment(id, data) {
 }
 
 export async function deleteEquipment(id) {
+  const requests =
+    await requestRepository.findByEquipmentId(id);
+
+  const openRequests = requests.filter(
+    (request) =>
+      request.status !== 'done' &&
+      request.status !== 'rejected'
+  );
+
+  if (openRequests.length > 0) {
+    const error = new Error(
+      'Equipment has open maintenance requests'
+    );
+
+    error.code = 'OPEN_REQUESTS';
+
+    throw error;
+  }
+
   return equipmentRepository.remove(id);
+}
+
+export async function getEquipmentRequests(id) {
+  return requestRepository.findByEquipmentId(id);
 }
