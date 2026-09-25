@@ -1,150 +1,85 @@
-import { v4 as uuidv4 } from 'uuid';
-import * as equipmentRepository from '../repositories/equipment.repository.js';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-export async function getEquipment({
-  status,
-  type,
-  sortBy = 'name',
-  order = 'asc',
-  page = 1,
-  limit = 10
-}) {
-  let equipment = await equipmentRepository.findAll();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  if (status) {
-    equipment = equipment.filter((item) => item.status === status);
-  }
+const filePath = path.join(__dirname, '../data/equipment.json');
 
-  if (type) {
-    equipment = equipment.filter((item) => item.type === type);
-  }
-
-  const allowedSortFields = [
-    'name',
-    'type',
-    'serialNumber',
-    'status',
-    'installedAt'
-  ];
-
-  if (allowedSortFields.includes(sortBy)) {
-    equipment.sort((a, b) => {
-      const first = a[sortBy];
-      const second = b[sortBy];
-
-      if (first < second) {
-        return order === 'desc' ? 1 : -1;
-      }
-
-      if (first > second) {
-        return order === 'desc' ? -1 : 1;
-      }
-
-      return 0;
-    });
-  }
-
-  const total = equipment.length;
-
-  const start = (page - 1) * limit;
-  const end = start + limit;
-
-  equipment = equipment.slice(start, end);
-
-  return {
-    data: equipment,
-    meta: {
-      total,
-      page,
-      limit
-    }
-  };
+async function readEquipment() {
+  const data = await fs.readFile(filePath, 'utf-8');
+  return JSON.parse(data);
 }
 
-export async function getEquipmentById(id) {
-  return equipmentRepository.findById(id);
+async function writeEquipment(equipment) {
+  await fs.writeFile(
+    filePath,
+    JSON.stringify(equipment, null, 2)
+  );
 }
 
-export async function createEquipment(data) {
-  const existingEquipment =
-    await equipmentRepository.findBySerialNumber(data.serialNumber);
-
-  if (existingEquipment) {
-    const error = new Error('Serial number already exists');
-    error.code = 'DUPLICATE_SERIAL_NUMBER';
-    throw error;
-  }
-
-  const equipment = {
-    id: uuidv4(),
-    name: data.name,
-    type: data.type,
-    serialNumber: data.serialNumber,
-    location: {
-      lat: data.location.lat,
-      lon: data.location.lon
-    },
-    status: data.status,
-    installedAt: data.installedAt
-  };
-
-  return equipmentRepository.create(equipment);
+export async function findAll() {
+  return readEquipment();
 }
 
-export async function updateEquipment(id, data) {
-  const existingEquipment =
-    await equipmentRepository.findById(id);
+export async function findById(id) {
+  const equipment = await readEquipment();
 
-  if (!existingEquipment) {
+  return equipment.find((item) => item.id === id) || null;
+}
+
+export async function findBySerialNumber(serialNumber) {
+  const equipment = await readEquipment();
+
+  return (
+    equipment.find(
+      (item) => item.serialNumber === serialNumber
+    ) || null
+  );
+}
+
+export async function create(equipment) {
+  const data = await readEquipment();
+
+  data.push(equipment);
+
+  await writeEquipment(data);
+
+  return equipment;
+}
+
+export async function update(id, updates) {
+  const data = await readEquipment();
+
+  const index = data.findIndex((item) => item.id === id);
+
+  if (index === -1) {
     return null;
   }
 
-  if (data.serialNumber) {
-    const equipmentWithSameSerialNumber =
-      await equipmentRepository.findBySerialNumber(data.serialNumber);
+  data[index] = {
+    ...data[index],
+    ...updates
+  };
 
-    if (
-      equipmentWithSameSerialNumber &&
-      equipmentWithSameSerialNumber.id !== id
-    ) {
-      const error = new Error('Serial number already exists');
-      error.code = 'DUPLICATE_SERIAL_NUMBER';
-      throw error;
-    }
-  }
+  await writeEquipment(data);
 
-  const updates = {};
-
-  if (data.name !== undefined) {
-    updates.name = data.name;
-  }
-
-  if (data.type !== undefined) {
-    updates.type = data.type;
-  }
-
-  if (data.serialNumber !== undefined) {
-    updates.serialNumber = data.serialNumber;
-  }
-
-  if (data.location !== undefined) {
-    updates.location = {
-      lat: data.location.lat,
-      lon: data.location.lon
-    };
-  }
-
-  if (data.status !== undefined) {
-    updates.status = data.status;
-  }
-
-  if (data.installedAt !== undefined) {
-    updates.installedAt = data.installedAt;
-  }
-
-  return equipmentRepository.update(id, updates);
+  return data[index];
 }
 
-export async function deleteEquipment(id) {
-  return equipmentRepository.remove(id);
+export async function remove(id) {
+  const data = await readEquipment();
+
+  const index = data.findIndex((item) => item.id === id);
+
+  if (index === -1) {
+    return false;
+  }
+
+  data.splice(index, 1);
+
+  await writeEquipment(data);
+
+  return true;
 }

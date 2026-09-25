@@ -4,8 +4,8 @@
   "description": "REST API for renewable energy equipment maintenance",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
   "dependencies": {
     "express": "^5.1.0",
