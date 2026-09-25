@@ -9,7 +9,6 @@ const filePath = path.join(__dirname, '../data/equipment.json');
 
 async function readEquipment() {
   const data = await fs.readFile(filePath, 'utf-8');
-
   return JSON.parse(data);
 }
 
@@ -27,62 +26,60 @@ export async function findAll() {
 export async function findById(id) {
   const equipment = await readEquipment();
 
-  return equipment.find((item) => item.id === id);
+  return equipment.find((item) => item.id === id) || null;
 }
 
 export async function findBySerialNumber(serialNumber) {
   const equipment = await readEquipment();
 
-  return equipment.find(
-    (item) => item.serialNumber === serialNumber
+  return (
+    equipment.find(
+      (item) => item.serialNumber === serialNumber
+    ) || null
   );
 }
 
-export async function create(item) {
-  const equipment = await readEquipment();
+export async function create(equipment) {
+  const data = await readEquipment();
 
-  equipment.push(item);
+  data.push(equipment);
 
-  await writeEquipment(equipment);
+  await writeEquipment(data);
 
-  return item;
+  return equipment;
 }
 
 export async function update(id, updates) {
-  const equipment = await readEquipment();
+  const data = await readEquipment();
 
-  const index = equipment.findIndex(
-    (item) => item.id === id
-  );
+  const index = data.findIndex((item) => item.id === id);
 
   if (index === -1) {
     return null;
   }
 
-  equipment[index] = {
-    ...equipment[index],
+  data[index] = {
+    ...data[index],
     ...updates
   };
 
-  await writeEquipment(equipment);
+  await writeEquipment(data);
 
-  return equipment[index];
+  return data[index];
 }
 
 export async function remove(id) {
-  const equipment = await readEquipment();
+  const data = await readEquipment();
 
-  const index = equipment.findIndex(
-    (item) => item.id === id
-  );
+  const index = data.findIndex((item) => item.id === id);
 
   if (index === -1) {
     return false;
   }
 
-  equipment.splice(index, 1);
+  data.splice(index, 1);
 
-  await writeEquipment(equipment);
+  await writeEquipment(data);
 
   return true;
 }

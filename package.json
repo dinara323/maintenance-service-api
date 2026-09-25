@@ -1,14 +1,18 @@
 {
   "name": "maintenance-service-api",
   "version": "1.0.0",
-  "description": "REST API for equipment maintenance",
+  "description": "REST API for renewable energy equipment maintenance",
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
   "dependencies": {
-    "express": "^4.21.2",
-    "uuid": "^11.0.3"
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "uuid": "^14.0.2"
   }
 }
