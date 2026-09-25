@@ -1,64 +1,19 @@
 import { Router } from 'express';
 
-
 import {
-
-getRequests,
-getRequestById,
-createRequest,
-updateRequest,
-changeStatus,
-deleteRequest
-
-}
-from '../controllers/request.controller.js';
-
-
+  getEquipment,
+  getEquipmentById,
+  createEquipment,
+  updateEquipment,
+  deleteEquipment
+} from '../controllers/equipment.controller.js';
 
 const router = Router();
 
-
-
-router.get(
- '/',
- getRequests
-);
-
-
-
-router.post(
- '/',
- createRequest
-);
-
-
-
-router.get(
- '/:id',
- getRequestById
-);
-
-
-
-router.patch(
- '/:id',
- updateRequest
-);
-
-
-
-router.patch(
- '/:id/status',
- changeStatus
-);
-
-
-
-router.delete(
- '/:id',
- deleteRequest
-);
-
-
+router.get('/', getEquipment);
+router.post('/', createEquipment);
+router.get('/:id', getEquipmentById);
+router.patch('/:id', updateEquipment);
+router.delete('/:id', deleteEquipment);
 
 export default router;
