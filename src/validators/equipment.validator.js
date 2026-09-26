@@ -12,7 +12,7 @@ const equipmentStatuses = [
   'decommissioned'
 ];
 
-export function createEquipmentSchema(data) {
+export function createEquipmentSchema(data = {}) {
   const errors = [];
 
   if (typeof data.name !== 'string') {
@@ -93,7 +93,7 @@ export function createEquipmentSchema(data) {
   return errors;
 }
 
-export function updateEquipmentSchema(data) {
+export function updateEquipmentSchema(data= {}) {
   const errors = [];
 
   const allowedFields = [

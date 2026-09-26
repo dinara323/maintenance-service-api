@@ -3,6 +3,8 @@ import { Router } from 'express';
 import {
   getEquipment,
   getEquipmentById,
+  getEquipmentRequests,
+  getEquipmentWeather,
   createEquipment,
   updateEquipment,
   deleteEquipment
@@ -33,6 +35,22 @@ router.post(
     body: createEquipmentSchema
   }),
   createEquipment
+);
+
+router.get(
+  '/:id/requests',
+  validate({
+    params: equipmentIdSchema
+  }),
+  getEquipmentRequests
+);
+
+router.get(
+  '/:id/weather',
+  validate({
+    params: equipmentIdSchema
+  }),
+  getEquipmentWeather
 );
 
 router.get(

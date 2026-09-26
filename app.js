@@ -14,12 +14,11 @@ import { errorHandler } from './src/middlewares/errorHandler.js';
 
 const app = express();
 
-app.use(express.json({ limit: '100kb' }));
-
 app.use(requestId);
 app.use(logger);
 app.use(security);
 app.use(corsMiddleware);
+app.use(express.json({ limit: '100kb' }));
 app.use(rateLimit);
 
 app.get('/', (req, res) => {

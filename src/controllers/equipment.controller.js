@@ -1,4 +1,6 @@
 import * as equipmentService from '../services/equipment.service.js';
+import * as weatherService from '../services/weather.service.js';
+
 import { NotFoundError } from '../errors/NotFoundError.js';
 import { ConflictError } from '../errors/ConflictError.js';
 
@@ -97,6 +99,48 @@ export async function deleteEquipment(req, res, next) {
     }
 
     res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getEquipmentRequests(req, res, next) {
+  try {
+    const equipment =
+      await equipmentService.getEquipmentById(req.params.id);
+
+    if (!equipment) {
+      throw new NotFoundError('Оборудование не найдено');
+    }
+
+    const requests =
+      await equipmentService.getEquipmentRequests(req.params.id);
+
+    res.status(200).json({
+      data: requests
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getEquipmentWeather(req, res, next) {
+  try {
+    const equipment =
+      await equipmentService.getEquipmentById(req.params.id);
+
+    if (!equipment) {
+      throw new NotFoundError('Оборудование не найдено');
+    }
+
+    const weather = await weatherService.getWeather(
+      equipment.location.lat,
+      equipment.location.lon
+    );
+
+    res.status(200).json({
+      data: weather
+    });
   } catch (error) {
     next(error);
   }
