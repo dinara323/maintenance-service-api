@@ -136,3 +136,64 @@ Password: maintenance_password
 **DB_PASSWORD=maintenance_password**
 **DB_POOL_MAX=10**
 **DB_POOL_MIN=0**
+**Конфигурация подключения Sequelize находится в:**
+
+**src/config/database.js**
+
+**Конфигурация Sequelize CLI:**
+
+**src/config/sequelize.config.cjs**
+
+**Настройка путей Sequelize CLI:**
+
+**.sequelizerc**
+## 6.Установка проекта
+
+**Клонировать репозиторий:**
+
+**git clone git@github.com:dinara323/maintenance-service-api.git**
+
+**Перейти в папку проекта:**
+
+**cd maintenance-service-api**
+
+**Установить зависимости:**
+
+**npm install**
+## 7.Установка проекта
+**Файл миграции:**
+
+**src/db/migrations/001-create-maintenance-tables.cjs**
+
+**Миграция создаёт следующие таблицы:**
+**sites**
+**equipment**
+**equipment_passports**
+**maintenance_requests**
+**request_status_history**
+**technicians**
+**request_assignees**
+
+**Запустить миграции:**
+
+**npm run db:migrate**
+**Файл миграции:
+
+src/db/migrations/001-create-maintenance-tables.cjs
+
+Миграция создаёт следующие таблицы:
+
+sites
+equipment
+equipment_passports
+maintenance_requests
+request_status_history
+technicians
+request_assignees
+
+Запустить миграции:
+
+npm run db:migrate**
+**Связи между моделями определены в файле:**
+
+**src/models/index.js**
