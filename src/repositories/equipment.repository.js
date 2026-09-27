@@ -1,85 +1,106 @@
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import {
+  Equipment,
+  Site,
+  EquipmentPassport,
+} from '../models/index.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const equipmentRepository = {
+  async findAll({ status, type, sortBy = 'name', order = 'asc', page = 1, limit = 10 }) {
+    const where = {};
 
-const filePath = path.join(__dirname, '../data/equipment.json');
+    if (status) {
+      where.status = status;
+    }
 
-async function readEquipment() {
-  const data = await fs.readFile(filePath, 'utf-8');
-  return JSON.parse(data);
-}
+    if (type) {
+      where.type = type;
+    }
 
-async function writeEquipment(equipment) {
-  await fs.writeFile(
-    filePath,
-    JSON.stringify(equipment, null, 2)
-  );
-}
+    const allowedSortFields = ['name', 'type', 'status', 'serialNumber'];
 
-export async function findAll() {
-  return readEquipment();
-}
+    const sortField = allowedSortFields.includes(sortBy)
+      ? sortBy
+      : 'name';
 
-export async function findById(id) {
-  const equipment = await readEquipment();
+    const result = await Equipment.findAndCountAll({
+      where,
+      include: [
+        {
+          model: Site,
+          as: 'site',
+          attributes: ['id', 'name', 'code', 'region', 'latitude', 'longitude'],
+        },
+        {
+          model: EquipmentPassport,
+          as: 'passport',
+          attributes: [
+            'id',
+            'manufacturer',
+            'model',
+            'nominalPower',
+            'lastVerificationDate',
+          ],
+        },
+      ],
+      order: [[sortField, order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC']],
+      limit,
+      offset: (page - 1) * limit,
+    });
 
-  return equipment.find((item) => item.id === id) || null;
-}
+    return {
+      rows: result.rows,
+      total: result.count,
+    };
+  },
 
-export async function findBySerialNumber(serialNumber) {
-  const equipment = await readEquipment();
+  async findById(id) {
+    return Equipment.findByPk(id, {
+      include: [
+        {
+          model: Site,
+          as: 'site',
+        },
+        {
+          model: EquipmentPassport,
+          as: 'passport',
+        },
+      ],
+    });
+  },
 
-  return (
-    equipment.find(
-      (item) => item.serialNumber === serialNumber
-    ) || null
-  );
-}
+  async findBySerialNumber(serialNumber) {
+    return Equipment.findOne({
+      where: { serialNumber },
+    });
+  },
 
-export async function create(equipment) {
-  const data = await readEquipment();
+  async create(data) {
+    return Equipment.create(data);
+  },
 
-  data.push(equipment);
+  async update(id, data) {
+    const equipment = await Equipment.findByPk(id);
 
-  await writeEquipment(data);
+    if (!equipment) {
+      return null;
+    }
 
-  return equipment;
-}
+    await equipment.update(data);
 
-export async function update(id, updates) {
-  const data = await readEquipment();
+    return equipment;
+  },
 
-  const index = data.findIndex((item) => item.id === id);
+  async remove(id) {
+    const equipment = await Equipment.findByPk(id);
 
-  if (index === -1) {
-    return null;
-  }
+    if (!equipment) {
+      return false;
+    }
 
-  data[index] = {
-    ...data[index],
-    ...updates
-  };
+    await equipment.destroy();
 
-  await writeEquipment(data);
+    return true;
+  },
+};
 
-  return data[index];
-}
-
-export async function remove(id) {
-  const data = await readEquipment();
-
-  const index = data.findIndex((item) => item.id === id);
-
-  if (index === -1) {
-    return false;
-  }
-
-  data.splice(index, 1);
-
-  await writeEquipment(data);
-
-  return true;
-}
+export default equipmentRepository;

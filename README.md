@@ -1,305 +1,199 @@
-# Maintenance Service API
+# Maintenance Service API — Лабораторная работа №3
 
-REST API на Node.js для управления промышленным оборудованием и заявками на техническое обслуживание. Приложение позволяет выполнять CRUD-операции с оборудованием и заявками, фильтровать и сортировать данные, проверять входные параметры и получать информацию о погоде по координатам оборудования через Open-Meteo.
+REST API для управления техническим обслуживанием промышленного оборудования.
 
-## Возможности
+В лабораторной работе выполнен переход от хранения данных в памяти к реляционной базе данных PostgreSQL с использованием ORM Sequelize. Добавлены миграции, начальные данные, модели базы данных, связи между сущностями и SQL-отчёты.
 
-Приложение позволяет:
+---
 
-* получать список оборудования;
-* добавлять, изменять и удалять оборудование;
-* получать оборудование по идентификатору;
-* получать заявки конкретного оборудования;
-* создавать, изменять и удалять заявки;
-* изменять статус заявки с проверкой допустимых переходов;
-* использовать фильтрацию, сортировку и пагинацию;
-* проверять входные данные;
-* обрабатывать ошибки с единым форматом ответа;
-* использовать `requestId` для отслеживания запросов;
-* логировать HTTP-запросы;
-* использовать CORS, rate limiting и security headers.
+## 1. Цель лабораторной работы
 
-## Требования
+Цель работы — подключить PostgreSQL к существующему REST API и организовать работу с базой данных через Sequelize.
 
-* Node.js 20+
-* npm
+В рамках лабораторной работы выполнены:
+* Подключение PostgreSQL;
+* Запуск PostgreSQL в Docker;
+* Создание структуры базы данных через Sequelize Migrations;
+* Создание начальных данных через Seeders;
+* Создание Sequelize-моделей;
+* Настройка связей между моделями;
+* Перенос работы репозиториев с памяти на PostgreSQL;
+* Сохранение существующей REST API структуры;
+* Добавление SQL-отчётов;
+* Проверка работы API через Postman.
 
-## Установка
+---
 
-Клонировать репозиторий:
+## 2. Используемые технологии
 
-```bash
-git clone <git@github.com:dinara323/maintenance-service-api.git>
-```
+- **Node.js**: 20+
+- **Express**
+- **PostgreSQL**: 16
+- **Sequelize**: 6
+- **Sequelize CLI**
+- **Docker** & **Docker Compose**
+- **Postman**
+- **Git**
 
-Перейти в папку проекта:
+---
 
-```bash
-cd maintenance-service-api
-```
-
-Установить зависимости:
-
-```bash
-npm install
-```
-
-## Переменные окружения
-
-В корне проекта необходимо создать файл `.env`.
-
-Пример:
-
-```env
-PORT=3000
-NODE_ENV=development
-
-CORS_ORIGINS=http://localhost:3000
-
-RATE_LIMIT_WINDOW=15
-RATE_LIMIT_MAX=100
-
-WEATHER_API_URL=https://api.open-meteo.com
-
-REQUEST_TIMEOUT_MS=5000
-```
-
-## Запуск
-
-Запустить приложение:
-
-```bash
-npm start
-```
-
-Для запуска в режиме разработки:
-
-```bash
-npm run dev
-```
-
-После запуска API доступно по адресу:
-
-```text
-http://localhost:3000
-```
-
-Проверка работоспособности:
-
-```bash
-curl http://localhost:3000/api/health
-```
-
-Ответ:
-
-```json
-{
-  "status": "ok"
-}
-```
-
-## API
-
-### Оборудование
-
-```text
-GET    /api/equipment
-POST   /api/equipment
-GET    /api/equipment/:id
-PATCH  /api/equipment/:id
-DELETE /api/equipment/:id
-GET    /api/equipment/:id/requests
-GET    /api/equipment/:id/weather
-```
-
-### Заявки
-
-```text
-GET    /api/requests
-POST   /api/requests
-PATCH  /api/requests/:id
-DELETE /api/requests/:id
-```
-
-Пример фильтрации и пагинации:
-
-```text
-GET /api/equipment?page=1&limit=10
-GET /api/equipment?status=operational
-GET /api/equipment?type=turbine
-GET /api/equipment?sortBy=name&order=asc
-```
-
-## Валидация
-
-Для оборудования проверяются:
-
-* обязательные поля;
-* допустимый тип оборудования;
-* уникальность `serialNumber`;
-* допустимый статус;
-* корректность даты установки.
-
-Для заявок проверяются:
-
-* существование оборудования;
-* длина названия от 5 до 120 символов;
-* длина описания до 2000 символов;
-* допустимый приоритет;
-* допустимый статус;
-* корректность даты.
-
-Допустимые статусы заявки:
-
-```text
-new
-in_progress
-done
-rejected
-```
-
-Недопустимый переход между статусами возвращает ошибку `409 Conflict`.
-
-## Обработка ошибок
-
-API использует единый формат ошибок:
-
-```json
-{
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Некорректные данные запроса",
-    "details": [],
-    "requestId": "..."
-  }
-}
-```
-
-Обрабатываются ошибки:
-
-* некорректных входных данных;
-* отсутствующего оборудования или заявки;
-* дублирующего `serialNumber`;
-* недопустимого перехода статуса;
-* неизвестного маршрута;
-* превышения лимита запросов;
-* ошибок внешнего API;
-* таймаута запроса к Open-Meteo.
-
-## Безопасность
-
-В приложении используются:
-
-* CORS;
-* rate limiting;
-* Helmet;
-* ограничение размера JSON-запроса;
-* `requestId`;
-* middleware для логирования запросов.
-
-## Хранение данных
-
-На текущем этапе данные хранятся в JSON-файлах:
-
-```text
-src/data/equipment.json
-src/data/requests.json
-```
-
-Доступ к данным выполняется через слой репозиториев:
-
-```text
-src/repositories/
-```
-
-Структура приложения разделена на слои:
-
-```text
-routes
-   ↓
-controllers
-   ↓
-services
-   ↓
-repositories
-   ↓
-JSON
-```
-
-## Open-Meteo
-
-Для endpoint:
-
-```text
-GET /api/equipment/:id/weather
-```
-
-используется API Open-Meteo.
-
-По координатам оборудования запрашиваются текущие:
-
-* температура;
-* скорость ветра.
-
-Таймаут внешнего запроса задаётся переменной:
-
-```env
-REQUEST_TIMEOUT_MS=5000
-```
-
-## Postman
-
-Для тестирования API используется Postman.
-
-Коллекция находится в:
-
-```text
-docs/postman/Maintenance Service API.postman_collection.json
-```
-
-Коллекция содержит разделы:
-
-```text
-Health
-Equipment
-Requests
-Validation
-Security
-```
-
-## Структура проекта
+## 3. Структура проекта
 
 ```text
 maintenance-service-api/
+├── src/
+│   ├── config/
+│   │   ├── database.js
+│   │   └── sequelize.config.cjs
+│   │
+│   ├── controllers/
+│   │   ├── equipment.controller.js
+│   │   └── request.controller.js
+│   │
+│   ├── db/
+│   │   ├── migrations/
+│   │   │   └── 001-create-maintenance-tables.cjs
+│   │   └── seeders/
+│   │       └── 001-maintenance-data.cjs
+│   │
+│   ├── models/
+│   │   ├── equipment.js
+│   │   ├── equipmentPassport.js
+│   │   ├── maintenanceRequest.js
+│   │   ├── requestAssignee.js
+│   │   ├── requestStatusHistory.js
+│   │   ├── site.js
+│   │   ├── technician.js
+│   │   └── index.js
+│   │
+│   ├── repositories/
+│   │   ├── equipment.repository.js
+│   │   ├── report.repository.js
+│   │   └── request.repository.js
+│   │
+│   ├── routes/
+│   │   ├── equipment.routes.js
+│   │   ├── request.routes.js
+│   │   ├── report.routes.js
+│   │   └── site.routes.js
+│   │
+│   ├── services/
+│   │   ├── equipment.service.js
+│   │   └── request.service.js
+│   │
+│   └── middlewares/
+│       ├── cors.middleware.js
+│       ├── errorHandler.js
+│       ├── logger.middleware.js
+│       ├── notFound.js
+│       ├── rateLimit.middleware.js
+│       ├── requestId.middleware.js
+│       ├── security.middleware.js
+│       └── validate.js
+│
 ├── app.js
 ├── server.js
-├── package.json
+├── docker-compose.yml
+├── .env
 ├── .env.example
-├── README.md
-├── docs/
-│   └── postman/
-└── src/
-    ├── config/
-    ├── controllers/
-    ├── data/
-    ├── errors/
-    ├── middlewares/
-    ├── repositories/
-    ├── routes/
-    ├── services/
-    └── validators/
+├── .sequelizerc
+├── package.json
+└── README.md
+---
 ```
+## 4. Настройка базы данных
 
-## Технологии
+Для работы приложения используется PostgreSQL 16, запущенный в Docker-контейнере.
 
-* Node.js
-* Express
-* JavaScript
-* REST API
-* Open-Meteo API
-* JSON
-* CORS
-* Helmet
-* express-rate-limit
-* UUID
-* Postman
+Конфигурация PostgreSQL находится в файле:
+
+docker-compose.yml
+
+**используемые параметры базы данных**
+Host: localhost
+Port: 5433
+Database: maintenance_service
+User: maintenance_user
+Password: maintenance_password
+
+## 5. Переменные окружения
+**Пример**
+**PORT=3000**
+**NODE_ENV=development**
+
+**CORS_ORIGINS=http://localhost:3000**
+
+**RATE_LIMIT_WINDOW=15**
+**RATE_LIMIT_MAX=100**
+
+**WEATHER_API_URL=https://api.open-meteo.com**
+**REQUEST_TIMEOUT_MS=5000**
+
+**DB_HOST=localhost**
+**DB_PORT=5433**
+**DB_NAME=maintenance_service**
+**DB_USER=maintenance_user**
+**DB_PASSWORD=maintenance_password**
+**DB_POOL_MAX=10**
+**DB_POOL_MIN=0**
+**Конфигурация подключения Sequelize находится в:**
+
+**src/config/database.js**
+
+**Конфигурация Sequelize CLI:**
+
+**src/config/sequelize.config.cjs**
+
+**Настройка путей Sequelize CLI:**
+
+**.sequelizerc**
+## 6.Установка проекта
+
+**Клонировать репозиторий:**
+
+**git clone git@github.com:dinara323/maintenance-service-api.git**
+
+**Перейти в папку проекта:**
+
+**cd maintenance-service-api**
+
+**Установить зависимости:**
+
+**npm install**
+## 7.Установка проекта
+**Файл миграции:**
+
+**src/db/migrations/001-create-maintenance-tables.cjs**
+
+**Миграция создаёт следующие таблицы:**
+**sites**
+**equipment**
+**equipment_passports**
+**maintenance_requests**
+**request_status_history**
+**technicians**
+**request_assignees**
+
+**Запустить миграции:**
+
+**npm run db:migrate**
+**Файл миграции:
+
+src/db/migrations/001-create-maintenance-tables.cjs
+
+Миграция создаёт следующие таблицы:
+
+sites
+equipment
+equipment_passports
+maintenance_requests
+request_status_history
+technicians
+request_assignees
+
+Запустить миграции:
+
+npm run db:migrate**
+**Связи между моделями определены в файле:**
+
+**src/models/index.js**

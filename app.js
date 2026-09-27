@@ -2,7 +2,8 @@ import express from 'express';
 
 import equipmentRoutes from './src/routes/equipment.routes.js';
 import requestRoutes from './src/routes/request.routes.js';
-
+import reportRoutes from './src/routes/report.routes.js';
+import siteRoutes from './src/routes/site.routes.js';
 import requestId from './src/middlewares/requestId.middleware.js';
 import logger from './src/middlewares/logger.middleware.js';
 import security from './src/middlewares/security.middleware.js';
@@ -20,6 +21,8 @@ app.use(security);
 app.use(corsMiddleware);
 app.use(express.json({ limit: '100kb' }));
 app.use(rateLimit);
+app.use('/api/reports', reportRoutes);
+app.use('/api/sites', siteRoutes);
 
 app.get('/', (req, res) => {
   res.status(200).json({
