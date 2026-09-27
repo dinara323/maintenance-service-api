@@ -5,7 +5,14 @@ import {
 } from '../models/index.js';
 
 const equipmentRepository = {
-  async findAll({ status, type, sortBy = 'name', order = 'asc', page = 1, limit = 10 }) {
+  async findAll({
+    status,
+    type,
+    sortBy = 'name',
+    order = 'asc',
+    page = 1,
+    limit = 10,
+  }) {
     const where = {};
 
     if (status) {
@@ -16,7 +23,12 @@ const equipmentRepository = {
       where.type = type;
     }
 
-    const allowedSortFields = ['name', 'type', 'status', 'serialNumber'];
+    const allowedSortFields = [
+      'name',
+      'type',
+      'status',
+      'serialNumber',
+    ];
 
     const sortField = allowedSortFields.includes(sortBy)
       ? sortBy
@@ -28,7 +40,14 @@ const equipmentRepository = {
         {
           model: Site,
           as: 'site',
-          attributes: ['id', 'name', 'code', 'region', 'latitude', 'longitude'],
+          attributes: [
+            'id',
+            'name',
+            'code',
+            'region',
+            'latitude',
+            'longitude',
+          ],
         },
         {
           model: EquipmentPassport,
@@ -42,9 +61,12 @@ const equipmentRepository = {
           ],
         },
       ],
-      order: [[sortField, order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC']],
-      limit,
-      offset: (page - 1) * limit,
+      order: [[
+        sortField,
+        order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
+      ]],
+      limit: Number(limit),
+      offset: (Number(page) - 1) * Number(limit),
     });
 
     return {
