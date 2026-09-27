@@ -118,21 +118,21 @@ Password: maintenance_password
 
 ## 5. Переменные окружения
 **Пример**
-PORT=3000
-NODE_ENV=development
+**PORT=3000**
+**NODE_ENV=development**
 
-CORS_ORIGINS=http://localhost:3000
+**CORS_ORIGINS=http://localhost:3000**
 
-RATE_LIMIT_WINDOW=15
-RATE_LIMIT_MAX=100
+**RATE_LIMIT_WINDOW=15**
+**RATE_LIMIT_MAX=100**
 
-WEATHER_API_URL=https://api.open-meteo.com
-REQUEST_TIMEOUT_MS=5000
+**WEATHER_API_URL=https://api.open-meteo.com**
+**REQUEST_TIMEOUT_MS=5000**
 
-DB_HOST=localhost
-DB_PORT=5433
-DB_NAME=maintenance_service
-DB_USER=maintenance_user
-DB_PASSWORD=maintenance_password
-DB_POOL_MAX=10
-DB_POOL_MIN=0
+**DB_HOST=localhost**
+**DB_PORT=5433**
+**DB_NAME=maintenance_service**
+**DB_USER=maintenance_user**
+**DB_PASSWORD=maintenance_password**
+**DB_POOL_MAX=10**
+**DB_POOL_MIN=0**
