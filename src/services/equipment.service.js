@@ -1,6 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
-
-import * as equipmentRepository from '../repositories/equipment.repository.js';
+import equipmentRepository from '../repositories/equipment.repository.js';
 import * as requestRepository from '../repositories/request.repository.js';
 
 export async function getEquipment({
@@ -9,61 +7,24 @@ export async function getEquipment({
   sortBy = 'name',
   order = 'asc',
   page = 1,
-  limit = 10
+  limit = 10,
 }) {
-  let equipment = await equipmentRepository.findAll();
-
-  if (status) {
-    equipment = equipment.filter(
-      (item) => item.status === status
-    );
-  }
-
-  if (type) {
-    equipment = equipment.filter(
-      (item) => item.type === type
-    );
-  }
-
-  const allowedSortFields = [
-    'name',
-    'type',
-    'serialNumber',
-    'status',
-    'installedAt'
-  ];
-
-  if (allowedSortFields.includes(sortBy)) {
-    equipment.sort((a, b) => {
-      const first = a[sortBy];
-      const second = b[sortBy];
-
-      if (first < second) {
-        return order === 'desc' ? 1 : -1;
-      }
-
-      if (first > second) {
-        return order === 'desc' ? -1 : 1;
-      }
-
-      return 0;
-    });
-  }
-
-  const total = equipment.length;
-
-  const start = (page - 1) * limit;
-  const end = start + limit;
-
-  equipment = equipment.slice(start, end);
+  const result = await equipmentRepository.findAll({
+    status,
+    type,
+    sortBy,
+    order,
+    page,
+    limit,
+  });
 
   return {
-    data: equipment,
+    data: result.rows,
     meta: {
-      total,
-      page,
-      limit
-    }
+      total: result.total,
+      page: Number(page),
+      limit: Number(limit),
+    },
   };
 }
 
@@ -74,12 +35,12 @@ export async function getEquipmentById(id) {
 export async function createEquipment(data) {
   const existingEquipment =
     await equipmentRepository.findBySerialNumber(
-      data.serialNumber
+      data.serialNumber,
     );
 
   if (existingEquipment) {
     const error = new Error(
-      'Serial number already exists'
+      'Serial number already exists',
     );
 
     error.code = 'DUPLICATE_SERIAL_NUMBER';
@@ -88,16 +49,12 @@ export async function createEquipment(data) {
   }
 
   const equipment = {
-    id: uuidv4(),
+    siteId: data.siteId,
     name: data.name,
     type: data.type,
     serialNumber: data.serialNumber,
-    location: {
-      lat: data.location.lat,
-      lon: data.location.lon
-    },
     status: data.status,
-    installedAt: data.installedAt
+    installedAt: data.installedAt,
   };
 
   return equipmentRepository.create(equipment);
@@ -114,7 +71,7 @@ export async function updateEquipment(id, data) {
   if (data.serialNumber) {
     const equipmentWithSameSerialNumber =
       await equipmentRepository.findBySerialNumber(
-        data.serialNumber
+        data.serialNumber,
       );
 
     if (
@@ -122,7 +79,7 @@ export async function updateEquipment(id, data) {
       equipmentWithSameSerialNumber.id !== id
     ) {
       const error = new Error(
-        'Serial number already exists'
+        'Serial number already exists',
       );
 
       error.code = 'DUPLICATE_SERIAL_NUMBER';
@@ -132,6 +89,10 @@ export async function updateEquipment(id, data) {
   }
 
   const updates = {};
+
+  if (data.siteId !== undefined) {
+    updates.siteId = data.siteId;
+  }
 
   if (data.name !== undefined) {
     updates.name = data.name;
@@ -143,13 +104,6 @@ export async function updateEquipment(id, data) {
 
   if (data.serialNumber !== undefined) {
     updates.serialNumber = data.serialNumber;
-  }
-
-  if (data.location !== undefined) {
-    updates.location = {
-      lat: data.location.lat,
-      lon: data.location.lon
-    };
   }
 
   if (data.status !== undefined) {
@@ -170,12 +124,12 @@ export async function deleteEquipment(id) {
   const openRequests = requests.filter(
     (request) =>
       request.status !== 'done' &&
-      request.status !== 'rejected'
+      request.status !== 'rejected',
   );
 
   if (openRequests.length > 0) {
     const error = new Error(
-      'Equipment has open maintenance requests'
+      'Equipment has open maintenance requests',
     );
 
     error.code = 'OPEN_REQUESTS';
