@@ -35,11 +35,12 @@ const authMiddleware = async (req, res, next) => {
       id: user.id,
       email: user.email,
       role: user.role,
+      technicianId: user.technicianId,
     };
 
-    next();
+    return next();
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 

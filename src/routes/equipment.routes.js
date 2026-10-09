@@ -7,75 +7,70 @@ import {
   getEquipmentWeather,
   createEquipment,
   updateEquipment,
-  deleteEquipment
+  deleteEquipment,
 } from '../controllers/equipment.controller.js';
 
+import authMiddleware from '../middlewares/auth.middleware.js';
+import requireRole from '../middlewares/role.middleware.js';
 import { validate } from '../middlewares/validate.js';
 
 import {
   createEquipmentSchema,
   updateEquipmentSchema,
   equipmentIdSchema,
-  equipmentQuerySchema
+  equipmentQuerySchema,
 } from '../validators/equipment.validator.js';
 
 const router = Router();
 
+router.use(authMiddleware);
+
 router.get(
   '/',
-  validate({
-    query: equipmentQuerySchema
-  }),
-  getEquipment
-);
-
-router.post(
-  '/',
-  validate({
-    body: createEquipmentSchema
-  }),
-  createEquipment
+  validate({ query: equipmentQuerySchema }),
+  getEquipment,
 );
 
 router.get(
   '/:id/requests',
-  validate({
-    params: equipmentIdSchema
-  }),
-  getEquipmentRequests
+  validate({ params: equipmentIdSchema }),
+  getEquipmentRequests,
 );
 
 router.get(
   '/:id/weather',
-  validate({
-    params: equipmentIdSchema
-  }),
-  getEquipmentWeather
+  validate({ params: equipmentIdSchema }),
+  getEquipmentWeather,
 );
 
 router.get(
   '/:id',
-  validate({
-    params: equipmentIdSchema
-  }),
-  getEquipmentById
+  validate({ params: equipmentIdSchema }),
+  getEquipmentById,
+);
+
+router.post(
+  '/',
+  requireRole('admin'),
+  validate({ body: createEquipmentSchema }),
+  createEquipment,
 );
 
 router.patch(
   '/:id',
+  requireRole('admin'),
   validate({
     params: equipmentIdSchema,
-    body: updateEquipmentSchema
+    body: updateEquipmentSchema,
   }),
-  updateEquipment
+  updateEquipment,
 );
 
 router.delete(
   '/:id',
-  validate({
-    params: equipmentIdSchema
-  }),
-  deleteEquipment
+  requireRole('admin'),
+  validate({ params: equipmentIdSchema }),
+  deleteEquipment,
 );
 
 export default router;

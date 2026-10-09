@@ -32,6 +32,16 @@ Equipment.hasMany(MaintenanceRequest, {
   as: 'requests',
 });
 
+User.belongsTo(Technician, {
+  foreignKey: 'technicianId',
+  as: 'technician',
+});
+
+Technician.hasOne(User, {
+  foreignKey: 'technicianId',
+  as: 'user',
+});
+
 MaintenanceRequest.belongsTo(Equipment, {
   foreignKey: 'equipmentId',
   as: 'equipment',

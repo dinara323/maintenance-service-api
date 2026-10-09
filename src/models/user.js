@@ -27,6 +27,16 @@ const User = sequelize.define(
       allowNull: false,
       defaultValue: 'viewer',
     },
+
+    technicianId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'technician_id',
+      references: {
+        model: 'technicians',
+        key: 'id',
+      },
+    },
   },
   {
     tableName: 'users',
