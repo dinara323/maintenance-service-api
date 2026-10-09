@@ -1,7 +1,10 @@
 import express from 'express';
 import reportRepository from '../repositories/report.repository.js';
+import authMiddleware from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
+
+router.use(authMiddleware);
 
 router.get('/equipment-load', async (req, res, next) => {
   try {

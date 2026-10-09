@@ -1,4 +1,5 @@
 import Site from './site.js';
+import User from './user.js';
 import Equipment from './equipment.js';
 import EquipmentPassport from './equipmentPassport.js';
 import MaintenanceRequest from './maintenanceRequest.js';
@@ -29,6 +30,16 @@ EquipmentPassport.belongsTo(Equipment, {
 Equipment.hasMany(MaintenanceRequest, {
   foreignKey: 'equipmentId',
   as: 'requests',
+});
+
+User.belongsTo(Technician, {
+  foreignKey: 'technicianId',
+  as: 'technician',
+});
+
+Technician.hasOne(User, {
+  foreignKey: 'technicianId',
+  as: 'user',
 });
 
 MaintenanceRequest.belongsTo(Equipment, {
@@ -68,4 +79,5 @@ export {
   RequestStatusHistory,
   Technician,
   RequestAssignee,
+  User,
 };
